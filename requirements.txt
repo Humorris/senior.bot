@@ -1,0 +1,10 @@
+google-cloud-texttospeech
+opencv-python
+mediapipe
+gpiozero
+pyttsx3
+python-dotenv
+speechrecognition
+pvporcupine
+pyaudio
+```
