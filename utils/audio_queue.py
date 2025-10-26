@@ -8,8 +8,8 @@ class AudioQueue:
         self.audio_queue = queue.Queue()
         self.is_playing = False
         self.lock = threading.Lock()
-        self.thread = threading.Thread(target=self.process_queue)
-        self.thread.start()
+        #self.thread = threading.Thread(target=self.process_queue)
+        #self.thread.start()
 
     def enqueue(self, audio_data):
         self.audio_queue.put(audio_data)

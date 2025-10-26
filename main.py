@@ -1,6 +1,6 @@
 import os
 import threading
-from mix_module import initialize_tts, detect_wake_word, process_voice_command
+from mix_module import initialize, detect_wake_word, process_voice_command
 from camera_module import initialize_camera, process_video_frames
 from utils.audio_queue import AudioQueue
 
