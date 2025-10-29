@@ -56,7 +56,6 @@ def speak(text):
         print("Voice service not started, unable to play audio.")
         return
 
-    audio_file = "/tmp/response.mp3"
     try:
         synthesis_input = texttospeech.SynthesisInput(text=text)
         voice_selection = texttospeech.VoiceSelectionParams(
@@ -71,6 +70,7 @@ def speak(text):
             input=synthesis_input, voice=voice_selection, audio_config=audio_config
         )
 
+        # Enqueue the path to a temp mp3; AudioQueue will handle file playback
         with tempfile.NamedTemporaryFile(delete=True, suffix=".mp3") as fp:
             fp.write(response.audio_content)
             fp.flush()
@@ -81,6 +81,7 @@ def speak(text):
 
 # --- Wake word detection and command processing ---
 def detect_wake_word():
+    """Block until wake word is detected, then return True. Return False on error."""
     porcupine = None
     pa = None
     audio_stream = None
@@ -111,16 +112,12 @@ def detect_wake_word():
             keyword_index = porcupine.process(pcm)
 
             if keyword_index >= 0:
-                print("Wake word detected! Please give your command.")
-                recognized_text = get_audio_input()
-                if recognized_text:
-                    gemini_output = get_gemini_response(recognized_text)
-                    speak(gemini_output)
-                else:
-                    speak("No valid command received, please try again.")
+                print("Wake word detected!")
+                return True
 
     except Exception as e:
         print(f"Error in wake word detection: {e}")
+        return False
     finally:
         if porcupine is not None:
             porcupine.delete()
@@ -158,7 +155,7 @@ def get_gemini_response(prompt_text):
     for attempt in range(max_retries):
         try:
             response = model.generate_content(
-                prompt_text,
+                instruction_prompt,
                 generation_config=genai.types.GenerationConfig(
                     temperature=0.7,
                     candidate_count=1,
@@ -171,7 +168,15 @@ def get_gemini_response(prompt_text):
 
 # --- Initialize functions ---
 def initialize():
-    detect_wake_word()  # Start wake word detection
+    """Perform module-level initialization only (no blocking calls)."""
+    print("Voice module initialized.")
+
+def process_voice_command():
+    """Capture a voice command and return Gemini's response text."""
+    recognized_text = get_audio_input()
+    if not recognized_text:
+        return "No valid command received, please try again."
+    return get_gemini_response(recognized_text)
 
 # Export functions
 if __name__ == "__main__":

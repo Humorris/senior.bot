@@ -14,7 +14,7 @@ cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     print("❌ Cannot open camera")
-    exit()
+    # Do not exit on import; allow caller to handle gracefully
 
 # Parameter settings
 ANGLE_TOLERANCE = 15  # ±15 degrees
@@ -201,5 +201,8 @@ def release_resources():
     cap.release()
     cv2.destroyAllWindows()
 
-initialize_camera()
-release_resources()
+def process_video_frames(audio_queue):
+    """Entry point used by main thread to process camera frames."""
+    # audio_queue currently unused, reserved for future prompts
+    initialize_camera()
+    release_resources()
