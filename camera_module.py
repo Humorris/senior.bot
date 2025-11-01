@@ -40,7 +40,9 @@ prev_in_range = True
 servo = Servo(18)
 servo_stop_event = Event()
 
-tts_engine = pyttsx3.init()
+tts_engine = pyttsx3.init(driverName='espeak')
+tts_engine.setProperty('voice', 'zh') #i'm here!!!
+
 tts_played = False
 
 def servo_move():
