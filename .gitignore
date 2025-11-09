@@ -7,3 +7,10 @@ __pycache__/
 
 # 忽略您的環境變數設定檔 (如 .env 檔，通常包含密鑰)
 .env
+
+# 忽略 Google Cloud 憑證檔案
+*.json
+google-credentials.json
+google-*.json
+!package.json
+!package-lock.json

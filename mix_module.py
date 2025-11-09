@@ -12,19 +12,28 @@ import pyaudio
 from google.cloud import texttospeech
 from utils.audio_queue import AudioQueue
 
+# --- Load .env file FIRST ---
+load_dotenv()
+
 # Initialize audio queue
 audio_queue = AudioQueue()
 
 # --- Initialize Google Cloud TTS Client ---
 tts_client = None
 try:
+    # Get credentials path from .env file (already loaded by load_dotenv())
+    credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if credentials_path:
+        print(f"✅ Using Google Cloud credentials from: {credentials_path}")
+    else:
+        print("⚠️ GOOGLE_APPLICATION_CREDENTIALS not set in .env file")
+        print("   Trying to use default credentials...")
+    
     tts_client = texttospeech.TextToSpeechClient()
-    print("Google Cloud Text-to-Speech client initialized successfully.")
+    print("✅ Google Cloud Text-to-Speech client initialized successfully.")
 except Exception as e:
-    print(f"Failed to initialize Google Cloud Text-to-Speech client: {e}")
-
-# --- Load .env file ---
-load_dotenv()
+    print(f"⚠️ Failed to initialize Google Cloud Text-to-Speech client: {e}")
+    print("   Continuing without TTS support...")
 
 # --- Set up Gemini API ---
 try:

@@ -4,7 +4,14 @@ import time
 import math
 from gpiozero import Servo
 from threading import Thread, Event
-import pyttsx3
+import tempfile
+import subprocess
+import os
+from dotenv import load_dotenv
+from google.cloud import texttospeech
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize mediapipe
 mp_face_mesh = mp.solutions.face_mesh
@@ -40,8 +47,22 @@ prev_in_range = True
 servo = Servo(18)
 servo_stop_event = Event()
 
-tts_engine = pyttsx3.init(driverName='espeak')
-tts_engine.setProperty('voice', 'zh') #i'm here!!!
+# Initialize Google Cloud TTS client
+tts_client = None
+try:
+    # Get credentials path from .env file (already loaded by load_dotenv())
+    credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if credentials_path:
+        print(f"✅ Using Google Cloud credentials from: {credentials_path}")
+    else:
+        print("⚠️ GOOGLE_APPLICATION_CREDENTIALS not set in .env file")
+        print("   Trying to use default credentials...")
+    
+    tts_client = texttospeech.TextToSpeechClient()
+    print("✅ Google Cloud Text-to-Speech client initialized successfully.")
+except Exception as e:
+    print(f"⚠️ Failed to initialize Google Cloud Text-to-Speech: {e}")
+    print("   Continuing without TTS support...")
 
 tts_played = False
 
@@ -59,6 +80,46 @@ def servo_move():
                 break
             time.sleep(0.1)
     servo.value = 0  # Stop the motor to avoid jitter
+
+def speak_text(text):
+    """Speak the given text using Google Cloud TTS (non-blocking)."""
+    if tts_client is None:
+        print("⚠️ TTS client not available, cannot speak.")
+        return
+    
+    try:
+        # Configure the text input
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+        
+        # Configure voice parameters (Traditional Chinese)
+        voice_selection = texttospeech.VoiceSelectionParams(
+            language_code='zh-TW',
+            name='cmn-TW-Wavenet-C',
+            ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
+        )
+        
+        # Configure audio output
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+        
+        # Generate speech
+        response = tts_client.synthesize_speech(
+            input=synthesis_input,
+            voice=voice_selection,
+            audio_config=audio_config
+        )
+        
+        # Save to temporary file and play
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+            fp.write(response.audio_content)
+            temp_path = fp.name
+        
+        # Play audio using mpg123 (non-blocking)
+        subprocess.Popen(["mpg123", "-q", temp_path])
+        
+    except Exception as e:
+        print(f"⚠️ TTS error: {e}")
 
 def get_face_angle(landmarks):
     left_eye = landmarks[33]
@@ -92,6 +153,10 @@ def write_status(focus, distraction, offcnt, status_msg):
 servo_thread = None
 
 def initialize_camera():
+    global phase, init_angles, init_start, goal_angle
+    global focus_time, distraction_time, off_count, prev_in_range
+    global servo_thread, tts_played
+    
     print("Please face forward and hold steady for 10 seconds to set focus direction.")
 
     while True:
@@ -163,8 +228,7 @@ def initialize_camera():
                         servo_thread.start()
 
                     if distraction_time >= 30 and not tts_played:
-                        tts_engine.say("專心點")
-                        tts_engine.runAndWait()
+                        speak_text("專心點")
                         tts_played = True
 
                 if distraction_time >= DISTRACTION_LIMIT:
