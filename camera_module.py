@@ -1,4 +1,7 @@
+import os
 import cv2
+import cv2.cv2
+cv2.setUseOptimized(True)
 import mediapipe as mp
 import time
 import math
@@ -6,9 +9,9 @@ from gpiozero import Servo
 from threading import Thread, Event
 import tempfile
 import subprocess
-import os
 from dotenv import load_dotenv
 from google.cloud import texttospeech
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'  # 使用無 GUI 後端
 
 # Load environment variables from .env file
 load_dotenv()
