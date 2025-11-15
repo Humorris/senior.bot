@@ -1,6 +1,7 @@
 import os
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'  # 使用無 GUI 後端
+
 import cv2
-import cv2.cv2
 cv2.setUseOptimized(True)
 import mediapipe as mp
 import time
@@ -11,7 +12,6 @@ import tempfile
 import subprocess
 from dotenv import load_dotenv
 from google.cloud import texttospeech
-os.environ['QT_QPA_PLATFORM'] = 'offscreen'  # 使用無 GUI 後端
 
 # Load environment variables from .env file
 load_dotenv()
@@ -256,11 +256,11 @@ def initialize_camera():
         cv2.putText(frame, f"Off count: {off_count}", (10, 120),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        cv2.imshow("Focus Tracker with Servo and Eye Check", frame)
+        #cv2.imshow("Focus Tracker with Servo and Eye Check", frame)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            print("\n❌ Manual stop\n")
-            break
+        #if cv2.waitKey(1) & 0xFF == ord("q"):
+        #   print("\n❌ Manual stop\n")
+        #   break
 
     if servo_thread is not None and servo_thread.is_alive():
         servo_stop_event.set()
