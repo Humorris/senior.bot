@@ -105,24 +105,51 @@ def detect_wake_word():
         )
 
         pa = pyaudio.PyAudio()
-        audio_stream = pa.open(
-            rate=porcupine.sample_rate,
-            channels=1,
-            format=pyaudio.paInt16,
-            input=True,
-            frames_per_buffer=porcupine.frame_length
-        )
+        
+        # 嘗試支持的採樣率列表
+        supported_rates = [porcupine.sample_rate, 16000, 44100, 48000]
+        audio_stream = None
+        actual_rate = None
+        
+        for rate in supported_rates:
+            try:
+                audio_stream = pa.open(
+                    rate=rate,
+                    channels=1,
+                    format=pyaudio.paInt16,
+                    input=True,
+                    frames_per_buffer=porcupine.frame_length,
+                    input_device_index=0
+                )
+                actual_rate = rate
+                print(f"✅ Audio stream opened at {rate}Hz")
+                break
+            except Exception as e:
+                print(f"⚠️ Failed to open audio at {rate}Hz: {e}")
+                if audio_stream is not None:
+                    audio_stream.close()
+                    audio_stream = None
+                continue
+        
+        if audio_stream is None:
+            print("❌ Failed to open audio stream with any supported rate")
+            return False
 
         print("Waiting for wake word...")
 
         while True:
-            pcm = audio_stream.read(porcupine.frame_length, exception_on_overflow=False)
-            pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
-            keyword_index = porcupine.process(pcm)
+            try:
+                pcm = audio_stream.read(porcupine.frame_length, exception_on_overflow=False)
+                pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
+                keyword_index = porcupine.process(pcm)
 
-            if keyword_index >= 0:
-                print("Wake word detected!")
-                return True
+                if keyword_index >= 0:
+                    print("✅ Wake word detected!")
+                    return True
+            except Exception as e:
+                print(f"⚠️ Error reading audio: {e}")
+                time.sleep(1)
+                continue
 
     except Exception as e:
         print(f"Error in wake word detection: {e}")
