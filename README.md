@@ -1,3 +1,12 @@
+Prior statement: it's a shitbox, can't be used now
+
+
+
+
+
+
+
+
 # Raspberry Pi Voice and Face Assistant
 
 This project combines voice recognition and face detection functionalities using a Raspberry Pi. It utilizes Google Text-to-Speech for audio output and manages wake word detection alongside face tracking.
